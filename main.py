@@ -1,13 +1,13 @@
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, TextDataset, DataCollatorForLanguageModeling, Trainer, TrainingArguments
 import torch
+from docx import Document
+
 # Загрузка предварительно обученной модели GPT-2
 model_name = "gpt2"
 tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+tokenizer.pad_token = tokenizer.eos_token
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = GPT2LMHeadModel.from_pretrained(model_name).to(device)
-
-# Предположим, что у вас есть некоторый корпус текстовых данных, хранящийся в переменной texts
-from docx import Document
 
 # Путь к файлу .doc
 docx_file = "fz44.docx"
@@ -25,7 +25,8 @@ text_data = "\n".join(texts)
 # (вместо предполагаемой переменной texts)
 # Пример:
 inputs = tokenizer(text_data, return_tensors="pt", truncation=True, padding=True)
-dataset = TextDataset(inputs["input_ids"], inputs["attention_mask"])
+input_ids = inputs["input_ids"].to(device)
+dataset = TextDataset(inputs["input_ids"], inputs["attention_mask"], block_size=128)
 
 # Создание аргументов обучения
 training_args = TrainingArguments(
